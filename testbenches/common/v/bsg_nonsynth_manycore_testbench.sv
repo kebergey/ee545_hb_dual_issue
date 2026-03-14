@@ -875,6 +875,12 @@ if (enable_vcore_profiling_p) begin
     ,.origin_y_cord_p(`BSG_MACHINE_ORIGIN_Y_CORD)
   ) vcore_prof (
     .*
+    ,.id_r(id_int_r)
+    ,.exe_r(exe_int_r)
+    ,.instruction(instruction0)
+    ,.decode(decode0)
+    ,.float_sb_clear(float_sb_clear_mem)
+    ,.float_sb_clear_id(float_sb_clear_mem_id)
     ,.clk_i(clk_i)
     ,.global_ctr_i($root.`HOST_MODULE_PATH.global_ctr)
     ,.print_stat_v_i($root.`HOST_MODULE_PATH.print_stat_v)
@@ -1005,7 +1011,13 @@ if (enable_vanilla_core_pc_histogram_p) begin
       ,.origin_y_cord_p(`BSG_MACHINE_ORIGIN_Y_CORD)
       )
   vcore_pc_hist
-    (.*);
+    (.*
+    ,.instruction(instruction0)
+    ,.decode(decode0)
+    ,.id_r(id_int_r)
+    ,.exe_r(exe_int_r)
+    ,.float_sb_clear(float_sb_clear_mem)
+    ,.float_sb_clear_id(float_sb_clear_mem_id));
 end // if (enable_vanilla_core_pc_histogram_p)
 `endif
 

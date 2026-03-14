@@ -231,7 +231,35 @@ module fpu_float
   end
   // synopsys translate_on
 
+  // synopsys translate_off
+  always_ff @ (posedge clk_i) begin
+    if (~reset_i) begin
+      // Integer multiply issued
+      if (imul_v_i)
+        $info("[DEBUG][VCORE] IMUL request issued. t=%0t, rs1=%h, rs2=%h, rd=%h",
+          $time,
+          imul_rs1_i, imul_rs2_i, imul_rd_i);
 
-  
+      // Floating point operation issued
+      if (fp_v_i)
+        $info("[DEBUG][VCORE] FPU float op issued. t=%0t, op=%0d, rs1=%h, rs2=%h, rs3=%h, rd=%h, rm=%0d",
+          $time,
+          fpu_float_op_i, fp_rs1_i, fp_rs2_i, fp_rs3_i, fp_rd_i, fp_rm_i);
+
+      // Integer multiply result
+      if (imul_v_o)
+        $info("[DEBUG][VCORE] IMUL result produced. t=%0t, rd=%h, result=%h",
+          $time,
+          imul_rd_o, imul_result_o);
+
+      // Floating point result
+      if (fp_v_o)
+        $info("[DEBUG][VCORE] FPU float result produced. t=%0t, rd=%h, result=%h, fflags=%h",
+          $time,
+          fp_rd_o, fp_result_o, fp_fflags_o);
+    end
+  end
+  // synopsys translate_on
+
 endmodule
 

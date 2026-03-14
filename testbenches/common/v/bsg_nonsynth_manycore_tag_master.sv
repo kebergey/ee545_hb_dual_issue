@@ -82,7 +82,7 @@ module bsg_nonsynth_manycore_tag_master
   ) btm (
     .clk_i(clk_i)
     ,.data_i(tr_en_r_lo & tr_valid_lo & tr_data_lo)
-    ,.en_i(1'b1)
+    //,.en_i(1'b1)
     ,.clients_r_o({pod_tags_o})
   );
 

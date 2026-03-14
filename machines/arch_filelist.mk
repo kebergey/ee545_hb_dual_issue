@@ -177,6 +177,7 @@ VSOURCES += $(BSG_MANYCORE_DIR)/v/vanilla_bean/regfile.sv
 VSOURCES += $(BSG_MANYCORE_DIR)/v/vanilla_bean/regfile_synth.sv
 VSOURCES += $(BSG_MANYCORE_DIR)/v/vanilla_bean/regfile_hard.sv
 VSOURCES += $(BSG_MANYCORE_DIR)/v/vanilla_bean/scoreboard.sv
+VSOURCES += $(BSG_MANYCORE_DIR)/v/vanilla_bean/instr_scheduler.sv
 
 VSOURCES += $(BSG_MANYCORE_DIR)/v/bsg_manycore_pod_ruche_array.sv
 VSOURCES += $(BSG_MANYCORE_DIR)/v/bsg_manycore_pod_ruche.sv

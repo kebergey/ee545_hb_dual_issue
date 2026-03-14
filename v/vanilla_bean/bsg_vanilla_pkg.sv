@@ -257,6 +257,7 @@ typedef struct packed {
     logic local_load;
     logic [1:0] byte_sel;
     logic icache_miss;
+    logic valid;
 } mem_ctrl_signals_s;
 
 typedef struct packed {

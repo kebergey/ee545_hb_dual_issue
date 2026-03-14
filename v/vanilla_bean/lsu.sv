@@ -174,7 +174,19 @@ module lsu
     end
   end
 
+  always_ff @ (posedge clk_i) begin
+    if (~reset_i) begin
+      if (remote_req_v_o)
+        $info("[DEBUG][VCORE] Remote request issued. t=%0t, write_not_read=%h, mask=%h, reg_id=%h, data=%h, addr=%h, float_wb=%h, pc_plus4=%h", $time, 
+          remote_req_o.write_not_read, remote_req_o.mask, remote_req_o.reg_id, remote_req_o.data, remote_req_o.addr, remote_req_o.load_info.float_wb, pc_plus4_i);
 
+      if (dmem_v_o)
+        $info("[DEBUG][VCORE] DMEM request issued. t=%0t, w_o=%h, dmem_addr_o=%h, dmem_data_o=%h, dmem_mask_o=%h, pc_plus4=%h", $time, 
+          dmem_w_o, dmem_addr_o, dmem_data_o, dmem_mask_o, pc_plus4_i);
+
+    end
+  end
+  
   // synopsys translate_on
 
 

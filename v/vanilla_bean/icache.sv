@@ -30,15 +30,22 @@ module icache
     , input w_i
     , input flush_i
     , input read_pc_plus4_i
+    , input read_pc_plus8_i
 
     // icache write
     , input [pc_width_lp-1:0] w_pc_i
     , input [RV32_instr_width_gp-1:0] w_instr_i
 
+    // instruction scheduler and instruction decode feedback
+    // , input int_is_instr0_i
+    , input decode_s instr0_decode_i
+    , input is_dual_issue_i
+
     // icache read (by processor)
     , input [pc_width_lp-1:0] pc_i
     , input [pc_width_lp-1:0] jalr_prediction_i
-    , output [RV32_instr_width_gp-1:0] instr_o
+    , output [RV32_instr_width_gp-1:0] instr0_o
+    , output [RV32_instr_width_gp-1:0] instr1_o
     , output [pc_width_lp-1:0] pred_or_jump_addr_o
     , output [pc_width_lp-1:0] pc_r_o
     , output icache_miss_o
@@ -224,15 +231,19 @@ module icache
   //   there is a hint from the next-pc logic that it is reading pc+4 next (no branch or jump).
   assign v_li = w_i
     ? write_en_icache
-    : (v_i & ((&pc_r[0+:icache_block_offset_width_lp]) | ~read_pc_plus4_i));
-
+    : (v_i & ((~is_dual_issue_i & (&pc_r[0+:icache_block_offset_width_lp])) | // single issue and at the last word
+              (is_dual_issue_i & (&pc_r[1+:icache_block_offset_width_lp-1])) | // dual issue and at the last two words
+              (~read_pc_plus4_i & ~read_pc_plus8_i))); // i.e. doing a non-sequential operation (branch/jump)
 
   // Merge the PC lower part and high part
   // BYTE operations
-  instruction_s instr_out;
-  assign instr_out = icache_data_lo.instr[pc_r[0+:icache_block_offset_width_lp]];
-  wire lower_sign_out = icache_data_lo.lower_sign[pc_r[0+:icache_block_offset_width_lp]];
-  wire lower_cout_out = icache_data_lo.lower_cout[pc_r[0+:icache_block_offset_width_lp]];
+  instruction_s instr0_out, instr1_out;
+  assign instr0_out = icache_data_lo.instr[{pc_r[1+:icache_block_offset_width_lp-1], 1'b0}];
+  assign instr1_out = icache_data_lo.instr[{pc_r[1+:icache_block_offset_width_lp-1], 1'b1}];
+  wire lower_sign_out = (~instr0_decode_i.is_fp_op & ~pc_r[0]) ?  icache_data_lo.lower_sign[{pc_r[1+:icache_block_offset_width_lp-1], 1'b0}] : 
+    icache_data_lo.lower_sign[{pc_r[1+:icache_block_offset_width_lp-1], 1'b1}];
+  wire lower_cout_out = (~instr0_decode_i.is_fp_op & ~pc_r[0]) ?  icache_data_lo.lower_cout[{pc_r[1+:icache_block_offset_width_lp-1], 1'b0}] : 
+    icache_data_lo.lower_cout[{pc_r[1+:icache_block_offset_width_lp-1], 1'b1}];
   wire sel_pc    = ~(lower_sign_out ^ lower_cout_out); 
   wire sel_pc_p1 = (~lower_sign_out) & lower_cout_out; 
 
@@ -275,18 +286,19 @@ module icache
     end
   end
 
-  wire is_jal_instr =  instr_out.op == `RV32_JAL_OP;
-  wire is_jalr_instr = instr_out.op == `RV32_JALR_OP;
+  wire is_jal_instr =  (~instr0_decode_i.is_fp_op & ~pc_r[0]) ?  instr0_out.op == `RV32_JAL_OP : instr1_out.op == `RV32_JAL_OP;
+  wire is_jalr_instr = (~instr0_decode_i.is_fp_op & ~pc_r[0]) ? instr0_out.op == `RV32_JALR_OP : instr1_out.op == `RV32_JALR_OP;
 
   // these are bytes address
   logic [pc_width_lp+2-1:0] jal_pc;
   logic [pc_width_lp+2-1:0] branch_pc;
    
-  assign branch_pc = {branch_pc_high_out, `RV32_Bimm_13extract(instr_out)};
-  assign jal_pc = {jal_pc_high_out, `RV32_Jimm_21extract(instr_out)};
+  assign branch_pc = (~instr0_decode_i.is_fp_op & ~pc_r[0]) ? {branch_pc_high_out, `RV32_Bimm_13extract(instr0_out)} : {branch_pc_high_out, `RV32_Bimm_13extract(instr1_out)};
+  assign jal_pc = (~instr0_decode_i.is_fp_op & ~pc_r[0]) ?  {jal_pc_high_out, `RV32_Jimm_21extract(instr0_out)} : {jal_pc_high_out, `RV32_Jimm_21extract(instr1_out)};
 
   // assign outputs.
-  assign instr_o = instr_out;
+  assign instr0_o = instr0_out;
+  assign instr1_o = instr1_out;
   assign pc_r_o = pc_r;
 
   // this is word addr.
